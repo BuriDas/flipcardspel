@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Flipcardspel</title>
+  <style>
+    :root {
+      --bg: #eef3f9;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #d6deea;
+      --primary: #2563eb;
+      --success: #15803d;
+      --danger: #dc2626;
+      --warning: #b45309;
+      --shadow: 0 10px 28px rgba(15, 23, 42, 0.10);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(180deg, #f4f7fb 0%, #e8eff8 100%);
+      color: var(--text);
+    }
+
+    body {
+      padding: max(14px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom)) 14px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1100px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .titlebar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .title {
+      font-size: clamp(1.35rem, 2.5vw, 2rem);
+      font-weight: 900;
+    }
+
+    .tiny {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      background: #f8fafc;
+      border: 1px solid #e7edf5;
+      border-radius: 18px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat .label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .stat .value {
+      font-size: 1.25rem;
+      font-weight: 900;
+    }
+
+    .progress-wrap {
+      margin-top: 12px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .progressbar {
+      width: 100%;
+      height: 14px;
+      background: #e8eef6;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progressbar > div {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), var(--success));
+      transition: width 0.25s ease;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .helper {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      resize: vertical;
+      border-radius: 18px;
+      border: 2px solid var(--line);
+      padding: 14px;
+      font: inherit;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .button-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .two { grid-template-columns: 1fr 1fr; }
+    .three { grid-template-columns: 1fr 1fr 1fr; }
+
+    button, select, input[type="number"], input[type="text"] {
+      border-radius: 18px;
+      min-height: 52px;
+      padding: 12px 14px;
+      font: inherit;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      font-weight: 800;
+      touch-action: manipulation;
+      box-shadow: var(--shadow);
+    }
+
+    button:active { transform: scale(0.985); }
+
+    select, input[type="number"], input[type="text"] {
+      width: 100%;
+      border: 2px solid var(--line);
+      background: white;
+      box-shadow: none;
+      font-weight: 700;
+    }
+
+    .primary { background: var(--primary); color: white; }
+    .success { background: var(--success); color: white; }
+    .danger { background: var(--danger); color: white; }
+    .secondary { background: white; color: var(--text); border: 2px solid var(--line); box-shadow: none; }
+    .warning { background: #fff7ed; color: var(--warning); border: 2px solid #fed7aa; box-shadow: none; }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .toggle-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .toggle-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      background: #f8fafc;
+      border-radius: 16px;
+      border: 1px solid #e7edf5;
+    }
+
+    .toggle-item label {
+      font-weight: 700;
+      flex: 1;
+    }
+
+    input[type="checkbox"] {
+      width: 24px;
+      height: 24px;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .module-toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      margin-bottom: 12px;
+      align-items: end;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 52px;
+      padding: 12px 16px;
+      border-radius: 18px;
+      border: 2px solid var(--line);
+      background: #f8fafc;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    body.class-mode .layout {
+      grid-template-columns: 1fr;
+    }
+
+    body.class-mode .layout > .stack:first-child {
+      display: none;
+    }
+
+    body.class-mode .titlebar .tiny {
+      display: none;
+    }
+
+    .card-shell {
+      perspective: 1200px;
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      height: min(54vh, 520px);
+      min-height: 320px;
+      transform-style: preserve-3d;
+      transition: transform 0.42s ease;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .card.flipped { transform: rotateY(180deg); }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      background: white;
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 28px;
+      overflow: hidden;
+    }
+
+    .face.back {
+      transform: rotateY(180deg);
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    }
+
+    .face .small {
+      color: var(--muted);
+      font-size: 0.96rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .word {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      line-height: 1.15;
+      font-weight: 900;
+      word-break: break-word;
+    }
+
+    .meta {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .control-strip {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .study-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .bottom-controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .listbox {
+      border: 2px solid var(--line);
+      border-radius: 18px;
+      padding: 10px;
+      min-height: 128px;
+      max-height: 220px;
+      overflow: auto;
+      background: #fff;
+    }
+
+    .list-item {
+      padding: 8px 10px;
+      border-radius: 12px;
+      margin-bottom: 6px;
+      background: #f8fafc;
+      border: 1px solid #e7edf5;
+      font-size: 0.94rem;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .muted-box {
+      background: #f8fafc;
+      border: 1px solid #e7edf5;
+      border-radius: 16px;
+      padding: 12px;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 700px) {
+      .stats { grid-template-columns: 1fr 1fr; }
+      .two, .three, .study-controls, .bottom-controls, .mini-grid { grid-template-columns: 1fr; }
+      .card { height: 48vh; min-height: 300px; }
+      .word { font-size: clamp(1.7rem, 8vw, 2.8rem); }
+    }
+  
+#classBackBtn{
+display:none;
+position:fixed;
+top:10px;
+left:10px;
+z-index:1000;
+padding:10px 14px;
+border-radius:10px;
+border:none;
+background:#111827;
+color:white;
+font-size:16px;
+box-shadow:0 6px 16px rgba(0,0,0,0.25);
+}
+body.class-mode #classBackBtn{display:block;}
+
+</style>
+</head>
+<body>
+<button id="classBackBtn">← Terug</button>
+  <div class="app">
+    <section class="panel">
+      <div class="titlebar">
+        <div>
+          <div class="title">Flipcardspel</div>
+        </div>
+        <div class="tiny">Sneltoetsen: spatie = omdraaien, → = volgende, K = gekend, N = nog niet</div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="label">Totaal</div><div class="value" id="totalCount">0</div></div>
+        <div class="stat"><div class="label">Gekend</div><div class="value" id="knownCount">0</div></div>
+        <div class="stat"><div class="label">Ongekend</div><div class="value" id="remainingCount">0</div></div>
+        <div class="stat"><div class="label">Fout beantwoord</div><div class="value" id="wrongCount">0</div></div>
+        <div class="stat"><div class="label">Beurt</div><div class="value" id="roundCount">0</div></div>
+        <div class="stat"><div class="label">Reeks</div><div class="value" id="sessionCount">0</div></div>
+      </div>
+      <div class="progress-wrap">
+        <div class="tiny">Voortgang</div>
+        <div class="progressbar"><div id="progressFill"></div></div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="stack">
+        <section class="panel">
+          <div class="section-title">Woordenlijst</div>
+          <div class="helper">Per regel: <strong>Frans ; Nederlands</strong>. Regels zoals <strong>MODULE 1</strong> worden automatisch als hoofdstuk herkend.</div>
+          <div class="module-toolbar">
+            <div>
+              <div class="tiny">Te oefenen module</div>
+              <select id="moduleSelect"></select>
+            </div>
+            <div class="pill" id="moduleCountPill">0 woorden</div>
+            <button class="secondary" id="classModeBtn">Klasmodus</button>
+          </div>
+          <textarea id="wordInput">MODULE 1
+bonjour ; goeden dag
+au revoir ; tot ziens
+merci ; bedankt
+pour ; voor, om te
+oui ; ja
+toi ; jou, jij
+non ; nee
+moi ; mij, ik
+le français ; het Frans
+le néerlandais ; het Nederlands
+un prof ; een leraar
+une prof ; een lerares
+un élève ; een leerling
+une élève ; een leerlinge
+un garçon ; een jongen
+une fille ; een meisje
+un cahier ; een schrift
+un livre ; een boek
+un stylo ; een pen
+un crayon ; een potlood
+un bureau ; een bureau
+un banc ; een bank
+un tableau ; een schoolbord
+une classe ; een klas
+une école ; een school
+une chaise ; een stoel
+une gomme ; een gom
+une armoire ; een kast
+une page ; een bladzijde
+une feuille ; een blad (papier)
+un mot ; een woord
+Monsieur (Leo) ; Meester (Leo)
+Madame (Leen) ; Juf (Leen)
+
+MODULE 2
+un ami ; een vriend
+une amie ; een vriendin
+un an ; een jaar
+habiter (à) ; wonen (in)
+avoir ; hebben
+grand / grande ; groot
+petit / petite ; klein
+jeune ; jong
+un vlog ; een vlog
+ici ; hier
+voici / voilà ; ziehier / ziedaar
+sympa ; sympathiek
+super ; super
+formidable ; geweldig
+(à) Bruxelles ; (in) Brussel
+un pays ; een land
+un âge ; een leeftijd
+un homme ; een man
+une femme ; een vrouw
+une ville ; een stad
+la Flandre ; Vlaanderen
+la Wallonie ; Wallonië
+la Belgique ; België
+un nom ; een naam
+un prénom ; een voornaam
+une photo ; een foto
+fort / forte ; sterk
+gentil / gentille ; aardig, lief
+joli / jolie ; mooi, lief
+vieux / vieille ; oud
+Salut ! ; Dag!
+À bientôt ! ; Tot binnenkort!
+
+MODULE 3
+un sport ; een sport
+un ballon ; een (grote) bal
+un film ; een film
+un jeu ; een spel
+un match ; een wedstrijd
+un ordinateur ; een computer
+un CD ; een cd
+un DVD ; een dvd
+le cinéma ; de cinema, de bioscoop
+le foot(ball) ; het voetbal
+le hockey ; het hockey
+le tennis ; het tennis
+le basket ; het basketbal
+le vélo ; het fietsen
+une télé ; een tv
+une radio ; een radio
+la gym ; het turnen
+la danse ; de dans
+une couleur ; een kleur
+une balle ; een (kleine) bal
+la musique ; de muziek
+une chanson ; een lied(je)
+aimer ; houden van
+danser ; dansen
+dessiner ; tekenen
+lire ; lezen
+jouer ; spelen
+chanter ; zingen
+nager ; zwemmen
+écouter ; luisteren
+faire du sport ; een sport beoefenen
+favori / favorite ; favoriet, lievelings-
+bleu / bleue ; blauw
+rouge ; rood
+jaune ; geel
+vert / verte ; groen
+mauve ; paars
+rose ; roze
+orange ; oranje
+blanc / blanche ; wit
+gris / grise ; grijs
+noir / noire ; zwart
+brun / brune ; bruin
+
+MODULE 4
+un journal ; een dagboek
+un enfant ; een kind
+un grand‑père ; een grootvader
+un père ; een vader
+un papa ; papa
+un oncle ; een oom
+un cousin ; een neef
+un frère ; een broer
+un fils ; een zoon
+un mari ; een man/echtgenoot
+un grandparent ; een grootouder
+un bébé ; een baby
+un filou ; een deugniet
+un parent ; een ouder
+un petit‑enfant ; een kleinkind
+un cadeau ; een geschenk
+une mère ; een moeder
+une maman ; een mama
+une fête ; een feest
+une tante ; een tante
+une cousine ; een nicht
+une grand‑mère ; een grootmoeder
+une famille ; een familie
+une sœur ; een zus
+une fille ; een dochter
+une femme ; een vrouw/echtgenote
+manger ; eten
+chercher ; zoeken
+regarder ; kijken
+trouver ; vinden
+aider ; helpen
+trop ; te (veel)
+parler ; spreken
+raconter ; vertellen
+aujourd’hui ; vandaag
+ensemble ; samen
+juillet ; juli
+septembre ; september
+mai ; mei
+février ; februari
+décembre ; december
+août ; augustus
+mars ; maart
+janvier ; januari
+novembre ; november
+juin ; juni
+avril ; april
+octobre ; oktober
+un jour ; een dag
+un mois ; een maand
+une année ; een jaar
+une semaine ; een week
+un anniversaire ; een verjaardag
+lundi ; maandag
+mardi ; dinsdag
+mercredi ; woensdag
+jeudi ; donderdag
+vendredi ; vrijdag
+samedi ; zaterdag
+dimanche ; zondag
+le Nouvel An ; Nieuwjaar
+Noël ; Kerstmis
+le carnaval ; carnaval
+premier / première ; eerste
+dernier / dernière ; laatste
+Pâques ; Pasen
+
+MODULE 5
+un légume ; een groente
+un fruit ; een vrucht
+un kiwi ; een kiwi
+un champignon ; een champignon
+un concombre ; een komkommer
+un pain ; een brood
+un croissant ; een croissant
+un œuf ; een ei
+le lait ; de melk
+le beurre ; de boter
+le sucre ; de suiker
+le fromage ; de kaas
+le jambon ; de ham
+le poisson ; de vis
+le chocolat ; de chocolade
+une pomme ; een appel
+une orange ; een sinaasappel
+une poire ; een peer
+une fraise ; een aardbei
+une tomate ; een tomaat
+une carotte ; een wortel
+une salade ; een sla/salade
+une banane ; een banaan
+une recette ; een recept
+une pomme de terre ; een aardappel
+une baguette ; een stokbrood
+une tarte ; een taart
+une tartine ; een boterham
+une tranche ; een sneetje
+la viande ; het vlees
+la confiture ; de jam
+la charcuterie ; de vleeswaren
+l’eau ; water
+couper ; snijden
+peler ; schillen
+verser ; gieten
+cuire ; bakken
+ajouter ; toevoegen
+cuisiner ; koken
+délicieux / délicieuse ; heerlijk
+laver ; wassen
+un magasin ; een winkel
+un supermarché ; een supermarkt
+un kilo ; een kilo
+un gramme ; een gram
+un euro ; een euro
+un centime (d’euro) ; een eurocent
+une madame ; een mevrouw
+une mademoiselle ; een juffrouw
+un monsieur ; een mijnheer
+une caisse ; een kassa
+peser ; wegen
+acheter ; kopen
+vendre ; verkopen
+payer ; betalen
+
+MODULE 6
+un GSM ; een gsm
+un portable ; een gsm
+un vétérinaire ; een dierenarts (m.)
+une vétérinaire ; een dierenarts (v.)
+un téléphone ; een telefoon
+un pompier ; een brandweerman
+une pompière ; een brandweervrouw
+un message ; een (sms-)bericht
+un arbre ; een boom
+une adresse ; een adres
+un week-end ; een weekend
+un numéro ; een nummer
+une rue ; een straat
+une heure ; een uur
+arriver ; aankomen
+vouloir ; willen
+une entrée ; een ingang
+rester ; blijven
+pouvoir ; mogen, kunnen
+une sortie ; een uitgang
+tomber ; vallen
+rentrer ; (terug) naar huis gaan
+téléphoner (à) ; telefoneren (naar)
+venir ; komen
+haut, haute ; hoog
+quel, quelle ; welk(e)
+là ; daar
+quand ; wanneer
+vite ; snel, vlug
+qui ; wie
+où ; waar
+bien ; goed
+que, quoi ; wat
+comment ; hoe
+mal ; slecht
+pourquoi ; waarom
+
+un animal ; een dier
+un lapin ; een konijn
+un coq ; een haan
+un cheval ; een paard
+un mouton ; een schaap
+un canard ; een eend
+un chien ; een hond
+un cochon ; een varken
+un oiseau ; een vogel
+un chat ; een kat
+un hamster ; een hamster
+un âne ; een ezel
+une vache ; een koe
+une ferme ; een boerderij
+derrière ; achter
+une chèvre ; een geit
+dans ; in
+devant ; voor
+une poule ; een kip
+sous ; onder
+entre ; tussen
+une tortue ; een schildpad
+sur ; op</textarea>
+          <div class="button-grid three">
+            <button class="primary" id="loadBtn">Lijst laden</button>
+            <button class="secondary" id="shuffleBtn">Schudden</button>
+            <button class="warning" id="resetProgressBtn">Voortgang wissen</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-title">Instellingen</div>
+          <div class="stack">
+            <select id="directionSelect">
+              <option value="fr-nl">Frans → Nederlands</option>
+              <option value="nl-fr">Nederlands → Frans</option>
+              <option value="random">Willekeurig beide richtingen</option>
+            </select>
+            <select id="orderSelect">
+              <option value="shuffle">Willekeurige volgorde</option>
+              <option value="fixed">Vaste volgorde</option>
+            </select>
+            <select id="modeSelect">
+              <option value="all">Alle woorden</option>
+              <option value="unknown">Alleen onbekende woorden</option>
+              <option value="wrong">Alleen fout beantwoorde woorden</option>
+            </select>
+            <div class="mini-grid">
+              <div>
+                <div class="tiny">Herhaal fout woord na x kaarten</div>
+                <input type="number" id="retryAfter" min="1" max="20" value="3" />
+              </div>
+              <div>
+                <div class="tiny">Start vanaf kaartnummer</div>
+                <input type="number" id="startAt" min="1" value="1" />
+              </div>
+            </div>
+          </div>
+          <div class="toggle-list" style="margin-top:12px;">
+            <div class="toggle-item"><label for="autoFlipOff">Nieuwe kaart meteen op voorkant tonen</label><input type="checkbox" id="autoFlipOff" /></div>
+            <div class="toggle-item"><label for="speakFront">Lees voorkant hardop voor</label><input type="checkbox" id="speakFront" /></div>
+            <div class="toggle-item"><label for="speakBack">Lees achterkant hardop voor</label><input type="checkbox" id="speakBack" /></div>
+            <div class="toggle-item"><label for="hideSettings">Verberg instellingen tijdens oefenen</label><input type="checkbox" id="hideSettings" /></div>
+          </div>
+          <div class="button-grid">
+            <button class="secondary" id="applySettingsBtn">Instellingen toepassen</button>
+          </div>
+        </section>
+
+        <section class="panel" id="listsPanel">
+          <div class="section-title">Overzicht</div>
+          <div class="tiny">Fout beantwoord</div>
+          <div class="listbox" id="wrongList"></div>
+          <div class="button-grid two">
+            <button class="secondary" id="retryWrongBtn">Oefen foutlijst</button>
+            <button class="secondary" id="clearWrongBtn">Wis foutlijst</button>
+          </div>
+          <div class="tiny" style="margin-top:12px;">Gekende woorden</div>
+          <div class="listbox" id="knownList"></div>
+        </section>
+      </div>
+
+      <div class="stack" id="studyColumn">
+        <section class="card-shell">
+          <div class="card" id="card">
+            <div class="face front">
+              <div class="small">Tik op de kaart om om te draaien</div>
+              <div class="word" id="frontWord">Laad eerst een lijst</div>
+              <div class="meta" id="frontMeta">—</div>
+            </div>
+            <div class="face back">
+              <div class="small">Antwoord</div>
+              <div class="word" id="backWord">—</div>
+              <div class="meta" id="backMeta">—</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="row">
+            <div class="muted-box" id="statusBox">Klaar om te oefenen.</div>
+            <button class="secondary" id="speakNowBtn">🔊 Lees</button>
+          </div>
+          <div class="control-strip">
+            <div class="study-controls">
+              <button class="danger" id="dontKnowBtn">Ik ken dit nog niet</button>
+              <button class="success" id="knowBtn">Ik ken dit</button>
+            </div>
+            <div class="bottom-controls">
+              <button class="secondary" id="flipBtn">Omdraaien</button>
+              <button class="secondary" id="nextBtn">Volgende</button>
+              <button class="secondary" id="prevBtn">Vorige</button>
+              <button class="secondary" id="markUnknownKeepBtn">Later opnieuw</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'flipcards-ipad-complete-v4-module6';
+
+    const els = {
+      wordInput: document.getElementById('wordInput'),
+      moduleSelect: document.getElementById('moduleSelect'),
+      moduleCountPill: document.getElementById('moduleCountPill'),
+      classModeBtn: document.getElementById('classModeBtn'),
+      loadBtn: document.getElementById('loadBtn'),
+      shuffleBtn: document.getElementById('shuffleBtn'),
+      resetProgressBtn: document.getElementById('resetProgressBtn'),
+      directionSelect: document.getElementById('directionSelect'),
+      orderSelect: document.getElementById('orderSelect'),
+      modeSelect: document.getElementById('modeSelect'),
+      retryAfter: document.getElementById('retryAfter'),
+      startAt: document.getElementById('startAt'),
+      autoFlipOff: document.getElementById('autoFlipOff'),
+      speakFront: document.getElementById('speakFront'),
+      speakBack: document.getElementById('speakBack'),
+      hideSettings: document.getElementById('hideSettings'),
+      applySettingsBtn: document.getElementById('applySettingsBtn'),
+      retryWrongBtn: document.getElementById('retryWrongBtn'),
+      clearWrongBtn: document.getElementById('clearWrongBtn'),
+      wrongList: document.getElementById('wrongList'),
+      knownList: document.getElementById('knownList'),
+      listsPanel: document.getElementById('listsPanel'),
+      card: document.getElementById('card'),
+      frontWord: document.getElementById('frontWord'),
+      backWord: document.getElementById('backWord'),
+      frontMeta: document.getElementById('frontMeta'),
+      backMeta: document.getElementById('backMeta'),
+      statusBox: document.getElementById('statusBox'),
+      speakNowBtn: document.getElementById('speakNowBtn'),
+      dontKnowBtn: document.getElementById('dontKnowBtn'),
+      knowBtn: document.getElementById('knowBtn'),
+      flipBtn: document.getElementById('flipBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      prevBtn: document.getElementById('prevBtn'),
+      markUnknownKeepBtn: document.getElementById('markUnknownKeepBtn'),
+      totalCount: document.getElementById('totalCount'),
+      knownCount: document.getElementById('knownCount'),
+      remainingCount: document.getElementById('remainingCount'),
+      wrongCount: document.getElementById('wrongCount'),
+      roundCount: document.getElementById('roundCount'),
+      sessionCount: document.getElementById('sessionCount'),
+      progressFill: document.getElementById('progressFill')
+    };
+
+    let baseCards = [];
+    let allCards = [];
+    let queue = [];
+    let currentCard = null;
+    let currentView = null;
+    let knownIds = new Set();
+    let wrongIds = [];
+    let cardHistory = [];
+    let roundCounter = 0;
+    let sessionCounter = 1;
+    let lock = false;
+    let moduleMap = new Map();
+    let currentModule = 'Alles';
+
+    function isVerbEntry(fr, nl = '') {
+      const normalize = value => value
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\([^)]*\)/g, '')
+        .replace(/[!'’.,:;?]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      const normalizedFr = normalize(fr);
+      const normalizedNl = normalize(nl);
+      if (!normalizedFr || !normalizedNl) return false;
+
+      const firstFr = normalizedFr.split(' ')[0] || '';
+      const frenchLooksLikeVerb = /(?:er|ir|re|oir)$/.test(firstFr) || /^faire\b/.test(normalizedFr);
+      if (!frenchLooksLikeVerb) return false;
+
+      const dutchVerbHints = [
+        'zijn', 'hebben', 'doen', 'gaan', 'komen', 'kunnen', 'mogen', 'moeten', 'willen',
+        'wonen', 'houden', 'dansen', 'tekenen', 'lezen', 'spelen', 'zingen', 'zwemmen',
+        'luisteren', 'beoefenen', 'eten', 'zoeken', 'kijken', 'vinden', 'helpen', 'spreken',
+        'vertellen', 'snijden', 'schillen', 'gieten', 'bakken', 'toevoegen', 'koken', 'wassen',
+        'wegen', 'kopen', 'verkopen', 'betalen'
+      ];
+
+      const dutchWords = normalizedNl.split(/\s+/).filter(Boolean);
+      return dutchWords.some(word => word.endsWith('en') || dutchVerbHints.includes(word));
+    }
+
+    
+function parseWordData(text) {
+      const modules = new Map();
+      modules.set('Alles', []);
+      modules.set('Werkwoorden (hele reeks)', []);
+      let activeModule = 'Alles';
+
+      text
+        .split('\n')
+        .map(line => line.trim())
+        .forEach((line, index) => {
+          if (!line) return;
+          if (/^MODULE\s+/i.test(line)) {
+            activeModule = line;
+            if (!modules.has(activeModule)) modules.set(activeModule, []);
+            return;
+          }
+
+          const parts = line.split(';');
+          if (parts.length < 2) return;
+          const fr = parts[0].trim();
+          const nl = parts.slice(1).join(';').trim();
+          if (!fr || !nl) return;
+
+          const card = { id: `${fr}__${nl}__${index}`, fr, nl, index, module: activeModule, isVerb: isVerbEntry(fr, nl) };
+          modules.get('Alles').push(card);
+          if (!modules.has(activeModule)) modules.set(activeModule, []);
+          modules.get(activeModule).push(card);
+          if (card.isVerb) modules.get('Werkwoorden (hele reeks)').push(card);
+        });
+
+      return { modules, allCards: modules.get('Alles') || [] };
+    }
+
+    function refreshModuleOptions(preserveValue = true) {
+      const previousValue = preserveValue ? els.moduleSelect.value || currentModule : 'Alles';
+      const options = [...moduleMap.keys()];
+      els.moduleSelect.innerHTML = options
+        .map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+        .join('');
+      const nextValue = options.includes(previousValue) ? previousValue : 'Alles';
+      els.moduleSelect.value = nextValue;
+      currentModule = nextValue;
+      updateModuleCount();
+    }
+
+    function updateModuleCount() {
+      const count = (moduleMap.get(currentModule) || []).length;
+      els.moduleCountPill.textContent = `${count} woord${count === 1 ? '' : 'en'}`;
+    }
+
+    function getSelectedCards() {
+      return [...(moduleMap.get(currentModule) || [])];
+    }
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function uniqueById(cards) {
+      const seen = new Set();
+      return cards.filter(card => {
+        if (seen.has(card.id)) return false;
+        seen.add(card.id);
+        return true;
+      });
+    }
+
+    function getModeCards() {
+      const mode = els.modeSelect.value;
+      let cards = getSelectedCards();
+      if (mode === 'unknown') cards = cards.filter(card => !knownIds.has(card.id));
+      if (mode === 'wrong') {
+        const selectedIds = new Set(cards.map(card => card.id));
+        cards = uniqueById(
+          wrongIds
+            .map(id => allCards.find(card => card.id === id))
+            .filter(card => card && selectedIds.has(card.id))
+        );
+      }
+      if (els.orderSelect.value === 'shuffle') cards = shuffle(cards);
+      const startAt = Math.max(1, Number(els.startAt.value || 1)) - 1;
+      return cards.slice(Math.min(startAt, cards.length));
+    }
+
+    function getDirection(card) {
+      const mode = els.directionSelect.value;
+      if (mode === 'fr-nl') return { front: card.fr, back: card.nl, label: 'Frans → Nederlands' };
+      if (mode === 'nl-fr') return { front: card.nl, back: card.fr, label: 'Nederlands → Frans' };
+      return Math.random() < 0.5
+        ? { front: card.fr, back: card.nl, label: 'Frans → Nederlands' }
+        : { front: card.nl, back: card.fr, label: 'Nederlands → Frans' };
+    }
+
+    function saveState() {
+      const payload = {
+        input: els.wordInput.value,
+        module: currentModule,
+        classMode: document.body.classList.contains('class-mode'),
+        direction: els.directionSelect.value,
+        order: els.orderSelect.value,
+        mode: els.modeSelect.value,
+        retryAfter: els.retryAfter.value,
+        startAt: els.startAt.value,
+        autoFlipOff: els.autoFlipOff.checked,
+        speakFront: els.speakFront.checked,
+        speakBack: els.speakBack.checked,
+        hideSettings: els.hideSettings.checked,
+        knownIds: [...knownIds],
+        wrongIds: [...wrongIds],
+        sessionCounter
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (typeof data.input === 'string') els.wordInput.value = data.input;
+        if (typeof data.module === 'string') currentModule = data.module;
+        if (data.classMode) document.body.classList.add('class-mode');
+        if (typeof data.direction === 'string') els.directionSelect.value = data.direction;
+        if (typeof data.order === 'string') els.orderSelect.value = data.order;
+        if (typeof data.mode === 'string') els.modeSelect.value = data.mode;
+        if (data.retryAfter) els.retryAfter.value = data.retryAfter;
+        if (data.startAt) els.startAt.value = data.startAt;
+        els.autoFlipOff.checked = !!data.autoFlipOff;
+        els.speakFront.checked = !!data.speakFront;
+        els.speakBack.checked = !!data.speakBack;
+        els.hideSettings.checked = !!data.hideSettings;
+        if (Array.isArray(data.knownIds)) knownIds = new Set(data.knownIds);
+        if (Array.isArray(data.wrongIds)) wrongIds = data.wrongIds;
+        if (data.sessionCounter) sessionCounter = data.sessionCounter;
+      } catch (e) {
+        console.warn('Kon vorige staat niet laden', e);
+      }
+    }
+
+    function rebuildQueue() {
+      queue = getModeCards();
+      updateStats();
+      refreshLists();
+      applyVisibility();
+    }
+
+    function updateStats() {
+      const total = baseCards.length;
+      const known = knownIds.size;
+      const remaining = Math.max(total - known, 0);
+      const wrongUnique = new Set(wrongIds).size;
+      els.totalCount.textContent = total;
+      els.knownCount.textContent = known;
+      els.remainingCount.textContent = remaining;
+      els.wrongCount.textContent = wrongUnique;
+      els.roundCount.textContent = roundCounter;
+      els.sessionCount.textContent = sessionCounter;
+      const pct = total ? Math.round((known / total) * 100) : 0;
+      els.progressFill.style.width = `${pct}%`;
+    }
+
+    function refreshLists() {
+      const selectedIds = new Set(baseCards.map(card => card.id));
+      const wrongCards = uniqueById(wrongIds.map(id => allCards.find(card => card.id === id)).filter(card => card && selectedIds.has(card.id)));
+      const knownCards = baseCards.filter(card => knownIds.has(card.id));
+      els.wrongList.innerHTML = wrongCards.length
+        ? wrongCards.map(card => `<div class="list-item">${escapeHtml(card.fr)} — ${escapeHtml(card.nl)}</div>`).join('')
+        : '<div class="tiny">Nog geen fout beantwoorde woorden.</div>';
+      els.knownList.innerHTML = knownCards.length
+        ? knownCards.map(card => `<div class="list-item">${escapeHtml(card.fr)} — ${escapeHtml(card.nl)}</div>`).join('')
+        : '<div class="tiny">Nog niets als gekend aangeduid.</div>';
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    let renderTimer = null;
+
+    function renderCard(card, fromHistory = false) {
+      if (renderTimer) {
+        clearTimeout(renderTimer);
+        renderTimer = null;
+      }
+
+      // Altijd eerst terug naar de voorkant en oude achterkant leegmaken,
+      // zodat de vertaling van de volgende kaart nooit zichtbaar wordt
+      // tijdens de draai-animatie.
+      els.card.classList.remove('flipped');
+      els.backWord.textContent = '';
+      els.backMeta.textContent = '';
+
+      currentCard = card;
+      if (!card) {
+        currentView = null;
+        els.frontWord.textContent = 'Klaar 🎉';
+        els.backWord.textContent = 'Geen kaarten meer in deze reeks.';
+        els.frontMeta.textContent = 'Pas instellingen aan of laad opnieuw';
+        els.backMeta.textContent = 'Goed bezig';
+        els.statusBox.textContent = 'De huidige reeks is afgewerkt.';
+        return;
+      }
+
+      const nextView = getDirection(card);
+      const showBackImmediately = els.autoFlipOff.checked;
+      const delay = 230;
+
+      renderTimer = setTimeout(() => {
+        currentView = nextView;
+        els.frontWord.textContent = currentView.front;
+        els.backWord.textContent = currentView.back;
+        els.frontMeta.textContent = `${currentView.label} • kaart ${Math.min(roundCounter + (fromHistory ? 0 : 1), Math.max(1, baseCards.length))}`;
+        els.backMeta.textContent = currentView.label;
+        els.statusBox.textContent = knownIds.has(card.id)
+          ? 'Dit woord staat al als gekend.'
+          : 'Oefenwoord actief.';
+
+        if (showBackImmediately) {
+          els.card.classList.add('flipped');
+        }
+
+        if (els.speakFront.checked) speakCurrent('front');
+        saveState();
+        renderTimer = null;
+      }, delay);
+    }
+
+    function nextCard() {
+      if (!queue.length) rebuildQueue();
+      const next = queue.shift() || null;
+      if (currentCard) cardHistory.push(currentCard);
+      if (next) roundCounter += 1;
+      updateStats();
+      renderCard(next);
+    }
+
+    function previousCard() {
+      const prev = cardHistory.pop();
+      if (!prev) return;
+      renderCard(prev, true);
+    }
+
+    function loadWords(resetKnown = false) {
+      const parsed = parseWordData(els.wordInput.value);
+      moduleMap = parsed.modules;
+      allCards = parsed.allCards;
+      refreshModuleOptions(true);
+      baseCards = getSelectedCards();
+
+      if (resetKnown) {
+        knownIds = new Set();
+        wrongIds = [];
+      }
+
+      const validIds = new Set(allCards.map(card => card.id));
+      knownIds = new Set([...knownIds].filter(id => validIds.has(id)));
+      wrongIds = wrongIds.filter(id => validIds.has(id));
+
+      roundCounter = 0;
+      cardHistory = [];
+      sessionCounter += 1;
+      rebuildQueue();
+      nextCard();
+      saveState();
+    }
+
+    function insertCurrentLater() {
+      if (!currentCard) return;
+      const retryAfter = Math.max(1, Number(els.retryAfter.value || 3));
+      const insertAt = Math.min(queue.length, retryAfter - 1);
+      queue.splice(insertAt, 0, currentCard);
+    }
+
+    function markKnown() {
+      if (!currentCard || lock) return;
+      lock = true;
+      knownIds.add(currentCard.id);
+      wrongIds = wrongIds.filter(id => id !== currentCard.id);
+      updateStats();
+      refreshLists();
+      nextCard();
+      setTimeout(() => lock = false, 120);
+    }
+
+    function markUnknown() {
+      if (!currentCard || lock) return;
+      lock = true;
+      wrongIds.push(currentCard.id);
+      insertCurrentLater();
+      updateStats();
+      refreshLists();
+      nextCard();
+      setTimeout(() => lock = false, 120);
+    }
+
+    function markUnknownLater() {
+      if (!currentCard || lock) return;
+      lock = true;
+      insertCurrentLater();
+      els.statusBox.textContent = 'Woord wordt later opnieuw aangeboden.';
+      nextCard();
+      setTimeout(() => lock = false, 120);
+    }
+
+    function flipCard() {
+      if (!currentCard) return;
+      els.card.classList.toggle('flipped');
+      if (els.card.classList.contains('flipped') && els.speakBack.checked) speakCurrent('back');
+    }
+
+    function speakCurrent(side = 'front') {
+      if (!currentView || !('speechSynthesis' in window)) return;
+      const text = side === 'back' ? currentView.back : currentView.front;
+      const utter = new SpeechSynthesisUtterance(text);
+      const isFrench = (side === 'front' ? currentView.label.startsWith('Frans') : currentView.label.endsWith('Frans'));
+      utter.lang = isFrench ? 'fr-FR' : 'nl-BE';
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utter);
+    }
+
+    function applyVisibility() {
+      const hideSidePanels = els.hideSettings.checked || document.body.classList.contains('class-mode');
+      els.listsPanel.classList.toggle('hidden', hideSidePanels);
+      updateModuleCount();
+    }
+
+    function toggleClassMode() {
+      document.body.classList.toggle('class-mode');
+      els.classModeBtn.textContent = document.body.classList.contains('class-mode')
+        ? 'Toon editor'
+        : 'Klasmodus';
+      applyVisibility();
+      saveState();
+    }
+
+    els.card.addEventListener('click', flipCard);
+    els.flipBtn.addEventListener('click', flipCard);
+    els.nextBtn.addEventListener('click', nextCard);
+    els.prevBtn.addEventListener('click', previousCard);
+    els.knowBtn.addEventListener('click', markKnown);
+    els.dontKnowBtn.addEventListener('click', markUnknown);
+    els.markUnknownKeepBtn.addEventListener('click', markUnknownLater);
+    els.speakNowBtn.addEventListener('click', () => speakCurrent(els.card.classList.contains('flipped') ? 'back' : 'front'));
+
+    els.moduleSelect.addEventListener('change', () => {
+      currentModule = els.moduleSelect.value;
+      loadWords(false);
+    });
+    els.classModeBtn.addEventListener('click', toggleClassMode);
+    els.loadBtn.addEventListener('click', () => loadWords(true));
+    els.shuffleBtn.addEventListener('click', () => {
+      rebuildQueue();
+      nextCard();
+    });
+    els.resetProgressBtn.addEventListener('click', () => {
+      knownIds = new Set();
+      wrongIds = [];
+      roundCounter = 0;
+      cardHistory = [];
+      rebuildQueue();
+      nextCard();
+      saveState();
+    });
+    els.applySettingsBtn.addEventListener('click', () => {
+      roundCounter = 0;
+      cardHistory = [];
+      rebuildQueue();
+      nextCard();
+      saveState();
+    });
+    els.retryWrongBtn.addEventListener('click', () => {
+      els.modeSelect.value = 'wrong';
+      rebuildQueue();
+      nextCard();
+      saveState();
+    });
+    els.clearWrongBtn.addEventListener('click', () => {
+      wrongIds = [];
+      rebuildQueue();
+      saveState();
+    });
+
+    [els.directionSelect, els.orderSelect, els.modeSelect, els.retryAfter, els.startAt, els.autoFlipOff, els.speakFront, els.speakBack, els.hideSettings].forEach(el => {
+      el.addEventListener('change', () => {
+        applyVisibility();
+        saveState();
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      const tag = document.activeElement?.tagName?.toLowerCase();
+      if (tag === 'textarea' || tag === 'input' || tag === 'select') return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        flipCard();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        nextCard();
+      } else if (e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        markKnown();
+      } else if (e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        markUnknown();
+      }
+    });
+
+    loadState();
+    els.classModeBtn.textContent = document.body.classList.contains('class-mode') ? 'Toon editor' : 'Klasmodus';
+    loadWords(false);
+  
+document.getElementById('classBackBtn').addEventListener('click', () => {
+  toggleClassMode();
+});
+
+</script>
+</body>
+</html>
+
