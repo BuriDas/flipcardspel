@@ -1249,14 +1249,134 @@ function parseWordData(text) {
       if (els.card.classList.contains('flipped') && els.speakBack.checked) speakCurrent('back');
     }
 
+    let cachedVoices = [];
+    let voicesReady = false;
+    let speechUnlocked = false;
+
+    function loadVoices() {
+      cachedVoices = window.speechSynthesis.getVoices();
+      if (cachedVoices.length) voicesReady = true;
+    }
+
+    function unlockSpeech() {
+      if (speechUnlocked || !('speechSynthesis' in window)) return;
+      speechUnlocked = true;
+
+      try {
+        const warmup = new SpeechSynthesisUtterance('');
+        warmup.volume = 0;
+        window.speechSynthesis.speak(warmup);
+        window.speechSynthesis.cancel();
+      } catch (e) {
+        console.warn('Speech warmup mislukt', e);
+      }
+    }
+
+    function normalizeSpeechText(text) {
+      return String(text || '')
+        .replace(/œ/g, 'oe')
+        .replace(/Œ/g, 'Oe')
+        .replace(/æ/g, 'ae')
+        .replace(/Æ/g, 'Ae')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function getBestDutchVoice() {
+      if (!cachedVoices.length) loadVoices();
+      if (!cachedVoices.length) return null;
+
+      const scored = cachedVoices
+        .map(voice => {
+          const name = (voice.name || '').toLowerCase();
+          const lang = (voice.lang || '').toLowerCase();
+          let score = 0;
+
+          if (lang === 'nl-be') score += 100;
+          else if (lang.startsWith('nl-be')) score += 95;
+          else if (lang.startsWith('nl')) score += 60;
+
+          if (name.includes('belg')) score += 30;
+          if (name.includes('vla')) score += 25;
+          if (name.includes('microsoft')) score += 8;
+          if (name.includes('google')) score += 8;
+          if (name.includes('apple')) score += 8;
+          if (voice.default) score += 5;
+
+          return { voice, score };
+        })
+        .sort((a, b) => b.score - a.score);
+
+      return scored[0]?.score > 0 ? scored[0].voice : null;
+    }
+
+    function getBestFrenchVoice() {
+      if (!cachedVoices.length) loadVoices();
+      if (!cachedVoices.length) return null;
+
+      const scored = cachedVoices
+        .map(voice => {
+          const name = (voice.name || '').toLowerCase();
+          const lang = (voice.lang || '').toLowerCase();
+          let score = 0;
+
+          if (lang === 'fr-fr') score += 100;
+          else if (lang.startsWith('fr-fr')) score += 95;
+          else if (lang.startsWith('fr')) score += 70;
+
+          if (name.includes('french')) score += 15;
+          if (name.includes('français')) score += 15;
+          if (name.includes('microsoft')) score += 8;
+          if (name.includes('google')) score += 8;
+          if (name.includes('apple')) score += 8;
+          if (voice.default) score += 5;
+
+          return { voice, score };
+        })
+        .sort((a, b) => b.score - a.score);
+
+      return scored[0]?.score > 0 ? scored[0].voice : null;
+    }
+
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
     function speakCurrent(side = 'front') {
       if (!currentView || !('speechSynthesis' in window)) return;
-      const text = side === 'back' ? currentView.back : currentView.front;
+
+      unlockSpeech();
+
+      let text = side === 'back' ? currentView.back : currentView.front;
+      text = normalizeSpeechText(text);
+      if (!text) return;
+
       const utter = new SpeechSynthesisUtterance(text);
-      const isFrench = (side === 'front' ? currentView.label.startsWith('Frans') : currentView.label.endsWith('Frans'));
-      utter.lang = isFrench ? 'fr-FR' : 'nl-BE';
+
+      const isFrench = (
+        side === 'front'
+          ? currentView.label.startsWith('Frans')
+          : currentView.label.endsWith('Frans')
+      );
+
+      if (isFrench) {
+        utter.lang = 'fr-FR';
+        const voice = getBestFrenchVoice();
+        if (voice) utter.voice = voice;
+      } else {
+        utter.lang = 'nl-BE';
+        const voice = getBestDutchVoice();
+        if (voice) utter.voice = voice;
+      }
+
+      utter.rate = 0.95;
+      utter.pitch = 1;
+      utter.volume = 1;
+
       window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utter);
+
+      setTimeout(() => {
+        window.speechSynthesis.speak(utter);
+      }, 20);
     }
 
     function applyVisibility() {
@@ -1344,6 +1464,10 @@ function parseWordData(text) {
         e.preventDefault();
         markUnknown();
       }
+    });
+
+    ['click', 'touchstart', 'keydown'].forEach(eventName => {
+      document.addEventListener(eventName, unlockSpeech, { once: true });
     });
 
     loadState();
