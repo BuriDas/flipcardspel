@@ -8,7 +8,7 @@
   <title>Flipcardspel</title>
   <link rel="icon" type="image/png" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
-  <link rel="manifest" href="manifest_v20.json">
+  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2563eb">
   <style>
     :root {
@@ -450,7 +450,7 @@ box-shadow:none;
     <section class="panel">
       <div class="titlebar">
         <div>
-          <div class="title">Flipcardspel <span class="tiny" style="font-size:0.9rem;vertical-align:middle;">V20</span></div>
+          <div class="title">Flipcardspel <span class="tiny" style="font-size:0.9rem;vertical-align:middle;">V21</span></div>
         </div>
         <div class="tiny">Sneltoetsen: spatie = omdraaien, → = volgende, K = gekend, N = nog niet</div>
       </div>
@@ -931,7 +931,7 @@ entendre ; horen</textarea>
   </div>
 
   <script>
-    const APP_VERSION = 'V20';
+    const APP_VERSION = 'V21';
     const STORAGE_KEY = 'flipcards-v20-pwa';
 
     const els = {
@@ -1517,7 +1517,7 @@ function parseWordData(text) {
 
       window.addEventListener('load', async () => {
         try {
-          const registration = await navigator.serviceWorker.register('./service-worker_v20.js');
+          const registration = await navigator.serviceWorker.register('./service-worker.js');
           swRegistration = registration;
 
           if (registration.waiting) promptForUpdate(registration);

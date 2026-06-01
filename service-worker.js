@@ -1,9 +1,9 @@
-const STATIC_CACHE = 'flipcardspel-static-v20';
+const STATIC_CACHE = 'flipcardspel-static-v21';
 const APP_SHELL = [
   './',
-  './index_v20.html',
-  './manifest_v20.json',
-  './service-worker_v20.js',
+  './index.html',
+  './manifest.json',
+  './service-worker.js',
   './icon.png'
 ];
 
